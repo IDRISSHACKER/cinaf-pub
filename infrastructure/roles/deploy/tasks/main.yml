@@ -1,0 +1,14 @@
+---
+- name: pulling image
+  docker_image:
+    name: idrissduval/cinaf-pub:latest
+    source: pull
+
+- name: start app inside a container
+  docker_container:
+    name: CINAF-PUB
+    image: idrissduval/cinaf-pub:latest
+    state: started
+    ports:
+      - "9876:3000"
+...

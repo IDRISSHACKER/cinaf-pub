@@ -1,0 +1,81 @@
+version: 2.1
+
+jobs:
+  test:
+    machine:
+      image: ubuntu-2204:2022.04.2
+    steps:
+      - checkout
+
+      - run:
+          name: login to docker hub
+          command: |
+            echo "$DOCKERHUB_PASSWORD" | docker login --username idrissduval --password-stdin
+
+      - run: docker --version
+
+      - run:
+          name: update package list
+          command: sudo apt update
+
+      - run:
+          name: install nodejs
+          command: sudo  apt install nodejs -y
+
+      - run: node --version
+
+      - run:
+          name: install pnpm package manager
+          command: npm install -g pnpm
+
+      - run:
+          name: Install app dependencies
+          command: pnpm install
+
+      - run:
+          name: Execute test suite
+          command: pnpm run test
+
+      - run:
+          name: build image
+          command: docker build -t idrissduval/cinaf-pub .
+
+      - run:
+          name: save image on docker regisgtry
+          command: docker push idrissduval/cinaf-pub
+
+  prod:
+    docker:
+      - image: python:latest
+    steps:
+      - checkout
+      - run:
+          name: Update cache
+          command: apt update
+
+      - run:
+          name: Install ansible
+          command: pip install ansible
+      - run:
+          name: Install ssh for login
+          command: apt install sshpass
+
+      - run:
+          no_output_timeout: 30m
+          name: Deploy app in production
+          command: ansible-playbook ./infrastructure/deploy.yml
+
+      - run:
+          name: Setting network and configure firewall
+          command: ansible-playbook ./infrastructure/network.yml
+
+workflows:
+ pipeline_ci_cd_nfs:
+    jobs:
+      - test
+      - prod:
+          requires:
+            - test
+          filters:
+            branches:
+              only: master

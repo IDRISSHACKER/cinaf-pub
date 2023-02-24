@@ -1,0 +1,14 @@
+---
+- name: Verify nginx
+  apt: name=nginx state=present
+
+
+- name: "Restart nginx"
+  service:
+    name: nginx
+    state: restarted
+
+- name: "End msg"
+  debug:
+    msg: "Application deployé avec success :)"
+...

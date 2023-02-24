@@ -1,0 +1,17 @@
+- name: Copy nginx conf file
+  template: src="{{ reverse_proxy_file }}" dest="{{ sites_available_dir }}/pub.cinaf.tv"
+
+- name: "Get certificate for {{ domain }} and www.{{ domain }}"
+  become: true
+  command: "certbot -n --nginx certonly -d {{ domain }} -d  www.{{ domain }}"
+  args:
+    creates: "/etc/letsencrypt/live/{{ domain }}"
+  ignore_errors: true
+  tags:
+    - nginx
+    - certbot
+
+- name: Dispatch app to site available
+  become: true
+  file: src="{{ sites_available_dir }}/pub.cinaf.tv" dest="{{ sites_enabled_dir }}/pub.cinaf.tv" state=link force=true
+
